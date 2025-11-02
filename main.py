@@ -6,10 +6,10 @@ from scipy.stats import poisson
 import re
 
 # === À REMPLIR PAR TOI ===
-API_ID = 1234567                  # ← Ton api_id (my.telegram.org)
-API_HASH = 'abcdef123456...'      # ← Ton api_hash
-BOT_TOKEN = '687654321:AAH...'    # ← Ton token BotFather
-CHANNEL = '@ton_canal_ici'        # ← EX: @fifa1xbet_live
+API_ID = int(os.getenv('API_ID'))
+API_HASH = os.getenv('API_HASH')
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+CHANNEL = os.getenv('CHANNEL')
 
 # === NE RIEN TOUCHER CI-DESSOUS ===
 client = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
