@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import poisson
 import re
+import os
 
 # === À REMPLIR PAR TOI ===
 API_ID = int(os.getenv('API_ID'))
