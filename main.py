@@ -20,7 +20,7 @@ TRANSLIT = {
 
 client = TelegramClient('bot_debug', API_ID, API_HASH)
 
-# === DEBUG : AFFICHE TOUT CE QUE LE BOT VOIT ===
+# === DEBUG : AFFICHE TOUT ===
 @client.on(events.NewMessage(chats=CHANNEL))
 async def debug_handler(event):
     msg = event.message.message
@@ -29,28 +29,24 @@ async def debug_handler(event):
     print(msg)
     print("="*60)
 
-    # TEST ÉQUIPES
     team_match = re.search(r'#([А-Яа-яA-Za-z0-9_]{3,50})_([А-Яа-яA-Za-z0-9_]{3,50})', msg)
     if team_match:
-        print(f"ÉQUIPES DÉTECTÉES : {team_match.group(1)} vs {team_match.group(2)}")
+        print(f"ÉQUIPES : {team_match.group(1)} vs {team_match.group(2)}")
     else:
-        print("AUCUNE ÉQUIPE DÉTECTÉE")
+        print("AUCUNE ÉQUIPE")
 
-    # TEST SCORE
     score_match = re.search(r'(\d+)\s*[:\-]\s*(\d+)', msg)
     if score_match:
-        print(f"SCORE DÉTECTÉ : {score_match.group(1)} - {score_match.group(2)}")
+        print(f"SCORE : {score_match.group(1)} - {score_match.group(2)}")
     else:
-        print("AUCUN SCORE DÉTECTÉ")
+        print("AUCUN SCORE")
 
-    # TEST TEMPS FINAL
     final_match = re.search(r'⏰\s*2-й\s+тайм\s+6:00', msg, re.IGNORECASE)
     if final_match:
-        print("FIN DE MATCH DÉTECTÉE : ⏰ 2-й тайм 6:00")
+        print("FIN DÉTECTÉE : ⏰ 2-й тайм 6:00")
     else:
-        print("PAS DE FIN DÉTECTÉE (pas ⏰ 2-й тайм 6:00)")
+        print("PAS DE FIN")
 
-    # TEST PARSING FINAL
     parsed = parse_final_match(msg)
     if parsed:
         matches.append(parsed)
@@ -77,10 +73,10 @@ def parse_final_match(text):
 
     return {'home': home, 'away': away, 'home_goals': home_goals, 'away_goals': away_goals, 'total': home_goals + away_goals}
 
-# === COMMANDES SIMPLES ===
+# === COMMANDES ===
 @client.on(events.NewMessage(pattern='/start'))
 async def start(event):
-    await event.reply(f"Debug mode ON\nMatchs: {len(matches)}")
+    await event.reply(f"Debug ON\nMatchs: {len(matches)}")
 
 @client.on(events.NewMessage(pattern='/stats'))
 async def stats(event):
