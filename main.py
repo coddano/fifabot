@@ -84,8 +84,10 @@ async def stats(event):
 
 # === LANCEMENT ===
 async def main():
-    await client.start(bot_token=BOT_TOKEN)
-    print("BOT EN MODE DEBUG - TOUT EST LOGGÉ")
+    # Telethon utilisera API_ID et API_HASH pour se connecter
+    await client.start() 
+    print("CLIENT UTILISATEUR EN COURS D'EXÉCUTION")
+    print(f"Surveillance du canal : {CHANNEL}")
     await client.run_until_disconnected()
 
 if __name__ == '__main__':
