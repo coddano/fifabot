@@ -3,58 +3,54 @@ import asyncio
 from telethon import TelegramClient, events
 import re
 
-# === VARIABLES ===
+# === VARIABLES D'ENVIRONNEMENT (pour Railway) ===
 API_ID = int(os.getenv('API_ID') or 0)
 API_HASH = os.getenv('API_HASH')
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-CHANNEL = os.getenv('CHANNEL')
+# CHANNEL n'est plus nécessaire, car on ne lit plus le canal
 
 matches = []
 
 # === TRANSLITTÉRATION ===
 TRANSLIT = {
-    'Арсенал': 'Arsenal', 'Эвертон': 'Everton', 'ВестХэмЮнайтед': 'West Ham United',
+    'Арсенал': 'Arsenal', 'Эвертон': 'Everton', 'ВестХэмЮнайтеed': 'West Ham United',
     'НьюкаслЮнайтед': 'Newcastle United', 'Ливерпуль': 'Liverpool', 'МанчестерСити': 'Manchester City',
     'Челси': 'Chelsea', 'Тоттенхэм': 'Tottenham', 'МанчестерЮнайтед': 'Manchester United',
 }
 
-client = TelegramClient('bot_debug', API_ID, API_HASH)
+# Initialiser le client en mode bot
+client = TelegramClient('bot_session_name', API_ID, API_HASH)
 
-# === DEBUG : AFFICHE TOUT ===
-@client.on(events.NewMessage(chats=CHANNEL))
-async def debug_handler(event):
+# === GESTIONNAIRE DE MESSAGES ===
+# On écoute TOUS les messages privés (private=True) envoyés au bot
+@client.on(events.NewMessage(incoming=True, private=True))
+async def message_handler(event):
     msg = event.message.message
     print("\n" + "="*60)
-    print("MESSAGE REÇU DU CANAL :")
+    print("MESSAGE REÇU (privé) :")
     print(msg)
     print("="*60)
 
-    team_match = re.search(r'#([А-Яа-яA-Za-z0-9_]{3,50})_([А-Яа-яA-Za-z0-9_]{3,50})', msg)
-    if team_match:
-        print(f"ÉQUIPES : {team_match.group(1)} vs {team_match.group(2)}")
-    else:
-        print("AUCUNE ÉQUIPE")
+    # On ignore les commandes
+    if msg.startswith('/'):
+        return
 
-    score_match = re.search(r'(\d+)\s*[:\-]\s*(\d+)', msg)
-    if score_match:
-        print(f"SCORE : {score_match.group(1)} - {score_match.group(2)}")
-    else:
-        print("AUCUN SCORE")
-
-    final_match = re.search(r'⏰\s*2-й\s+тайм\s+6:00', msg, re.IGNORECASE)
-    if final_match:
-        print("FIN DÉTECTÉE : ⏰ 2-й тайм 6:00")
-    else:
-        print("PAS DE FIN")
-
+    # On utilise la même logique de parsing que vous aviez
     parsed = parse_final_match(msg)
+    
     if parsed:
         matches.append(parsed)
-        print(f"MATCH AJOUTÉ ! → {parsed['home']} {parsed['home_goals']}-{parsed['away_goals']} {parsed['away']}")
+        match_str = f"MATCH AJOUTÉ ! → {parsed['home']} {parsed['home_goals']}-{parsed['away_goals']} {parsed['away']}"
+        print(match_str)
+        # Répondre à l'utilisateur pour confirmer
+        await event.reply(match_str)
     else:
-        print("MATCH NON AJOUTÉ")
+        print("MATCH NON AJOUTÉ (format non reconnu ou match non final)")
+        await event.reply("Format non reconnu ou match non terminé (⏰ 2-й тайм 6:00 manquant).")
+
 
 def parse_final_match(text):
+    # (Votre fonction parse_final_match reste exactement la même)
     team_match = re.search(r'#([А-Яа-яA-Za-z0-9_]{3,50})_([А-Яа-яA-Za-z0-9_]{3,50})', text)
     if not team_match: return None
     home_raw, away_raw = team_match.group(1), team_match.group(2)
@@ -68,7 +64,10 @@ def parse_final_match(text):
     if not re.search(r'⏰\s*2-й\s+тайм\s+6:00', text, re.IGNORECASE):
         return None
 
+    # On peut simplifier la vérification de doublons si vous les entrez manuellement
+    # (à vous de voir si vous gardez cette ligne)
     if any(m['home'] == home and m['away'] == away for m in matches[-10:]):
+        print("Doublon détecté")
         return None
 
     return {'home': home, 'away': away, 'home_goals': home_goals, 'away_goals': away_goals, 'total': home_goals + away_goals}
@@ -76,18 +75,17 @@ def parse_final_match(text):
 # === COMMANDES ===
 @client.on(events.NewMessage(pattern='/start'))
 async def start(event):
-    await event.reply(f"Debug ON\nMatchs: {len(matches)}")
+    await event.reply(f"Bot de stats (mode manuel) ON\nEnvoyez-moi les résultats pour les enregistrer.\nMatchs en mémoire : {len(matches)}")
 
 @client.on(events.NewMessage(pattern='/stats'))
 async def stats(event):
-    await event.reply(f"Matchs détectés : {len(matches)}")
+    await event.reply(f"Matchs détectés depuis le démarrage : {len(matches)}\n\n{matches[-10:]}") # Affiche les 10 derniers
 
 # === LANCEMENT ===
 async def main():
-    # Telethon utilisera API_ID et API_HASH pour se connecter
-    await client.start() 
-    print("CLIENT UTILISATEUR EN COURS D'EXÉCUTION")
-    print(f"Surveillance du canal : {CHANNEL}")
+    # Se connecte en utilisant le BOT_TOKEN
+    await client.start(bot_token=BOT_TOKEN)
+    print("BOT EN MODE MANUEL - PRÊT À RECEVOIR DES RÉSULTATS")
     await client.run_until_disconnected()
 
 if __name__ == '__main__':
